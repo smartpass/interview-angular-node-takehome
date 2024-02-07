@@ -1,0 +1,17 @@
+{
+  "packageManager": "yarn@4.1.0",
+  "name": "@smartpass/angular-node-takehome",
+  "version": "1.0.0",
+  "author": "SmartPass, Inc.",
+  "license": "All Rights Reserved",
+  "private": true,
+  "scripts": {
+    "start": "yarn workspaces foreach --all -pi run start",
+    "build": "yarn workspaces foreach --all -pti run build",
+    "start:server": "yarn workspace @smartpass/angular-node-takehome-server run start",
+    "start:client": "yarn workspace @smartpass/angular-node-takehome-client run start"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}
