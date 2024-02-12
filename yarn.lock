@@ -2378,6 +2378,7 @@ __metadata:
     "@smartpass/angular-node-takehome-common": "workspace:^"
     "@types/express": "npm:^4.17.21"
     "@types/node": "npm:^20.11.16"
+    cors: "npm:^2.8.5"
     express: "npm:^4.18.2"
     nodemon: "npm:^3.0.3"
     pino: "npm:^8.18.0"
@@ -3883,7 +3884,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cors@npm:~2.8.5":
+"cors@npm:^2.8.5, cors@npm:~2.8.5":
   version: 2.8.5
   resolution: "cors@npm:2.8.5"
   dependencies:

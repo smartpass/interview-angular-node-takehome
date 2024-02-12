@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@smartpass/angular-node-takehome-common": "workspace:^",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "pino": "^8.18.0",
     "pino-http": "^9.0.0",

@@ -1,5 +1,6 @@
 import { ClientMessage, ServerMessage } from '@smartpass/angular-node-takehome-common'
-import express, { Express, Request, Response } from 'express'
+import cors from 'cors'
+import express, { Express, Request, Response, json } from 'express'
 import * as sqlite from 'sqlite3'
 import { open } from 'sqlite'
 import pino from 'pino'
@@ -37,11 +38,34 @@ const app: Express = express()
 const websocket = new Server({ noServer: true })
 const port = 3000
 
-app.use(pinoHttp({ logger }))
+app.use(
+  pinoHttp({ logger }),
+  cors(),
+  json())
 
 app.get('/', (_req: Request, res: Response) => {
   res.send('Express + TypeScript Server')
 })
+
+app.route('/students')
+  .get(async (_req: Request, res: Response, next) => {
+    try {
+      const connection = await db
+      const result = await connection.all('select * from students')
+      res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+  .post(async (req: Request, res: Response, next) => {
+    try {
+      const connection = await db
+      const result = await connection.all('insert into students (name) values (?) returning *', [req.body.name])
+      res.status(201).json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
 
 websocket.on('connection', (ws, req) => {
   logger.debug('Connected to client at %o', req.socket.address())
