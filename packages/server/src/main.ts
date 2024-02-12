@@ -1,8 +1,11 @@
+import { ClientMessage, ServerMessage } from '@smartpass/angular-node-takehome-common'
 import express, { Express, Request, Response } from 'express'
+import * as sqlite from 'sqlite3'
+import { open } from 'sqlite'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { Server } from 'ws'
-import { ClientMessage, ServerMessage } from '@smartpass/angular-node-takehome-common'
+import { inspect } from 'util'
 
 const logger = pino({
   level: 'debug',
@@ -12,7 +15,22 @@ const logger = pino({
       colorize: true,
     }
   }
-})
+});
+
+const db = (async () => {
+  const db = await open({
+    filename: ':memory:',
+    driver: sqlite.verbose().Database,
+  })
+
+  logger.debug('Running migrations')
+  await db.migrate()
+
+  const students = await db.all('select * from students')
+  logger.debug(`students ${inspect(students)}`)
+
+  return db
+})()
 
 const app: Express = express()
 
@@ -26,8 +44,8 @@ app.get('/', (_req: Request, res: Response) => {
 })
 
 websocket.on('connection', (ws, req) => {
-  logger.debug('Connected to client at %o', req.socket.address())  
-  
+  logger.debug('Connected to client at %o', req.socket.address())
+
   ws.on('error', e => logger.error(e, 'Connection error'))
 
   ws.send(JSON.stringify({op: 'start', data: 'welocome!'}))
@@ -39,7 +57,7 @@ websocket.on('connection', (ws, req) => {
   })
 
   let isAlive = true
-  ws.on('pong', () => { 
+  ws.on('pong', () => {
     isAlive = true
   })
   const heartbeatInterval = setInterval(() => {
@@ -67,10 +85,22 @@ server.on('upgrade', (req, socket, head) => {
   })
 })
 
-process.on('SIGTERM', () => {
+const cleanup = async () => {
   logger.debug('Termination signal received, closing server')
-  server.close(() => {
-    logger.debug('Server closed')
+  server.close((err) => {
+    logger.debug(err, 'Server closed')
   })
   websocket.clients.forEach((ws) => ws.close(1001))
-})
+
+  try {
+    await (await db).close()
+    logger.debug('Database closed')
+  } catch (err) {
+    logger.debug(err, 'Database closed with error')
+  } finally {
+    process.exit(0)
+  }
+}
+
+process.on('SIGTERM', cleanup)
+process.on('SIGINT', cleanup)
