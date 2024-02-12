@@ -1,0 +1,14 @@
+{
+  "name": "@smartpass/angular-node-takehome-common",
+  "version": "0.0.0",
+  "main": "./main.ts",
+  "private": true,
+  "scripts": {
+    "build": "npx tsc",
+    "start": "npx tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

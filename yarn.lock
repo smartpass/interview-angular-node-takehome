@@ -2321,6 +2321,7 @@ __metadata:
     "@angular/platform-browser": "npm:^17.1.0"
     "@angular/platform-browser-dynamic": "npm:^17.1.0"
     "@angular/router": "npm:^17.1.0"
+    "@smartpass/angular-node-takehome-common": "workspace:^"
     "@types/jasmine": "npm:~5.1.0"
     jasmine-core: "npm:~5.1.0"
     karma: "npm:~6.4.0"
@@ -2335,10 +2336,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@smartpass/angular-node-takehome-common@workspace:^, @smartpass/angular-node-takehome-common@workspace:packages/common":
+  version: 0.0.0-use.local
+  resolution: "@smartpass/angular-node-takehome-common@workspace:packages/common"
+  dependencies:
+    typescript: "npm:^5.3.3"
+  languageName: unknown
+  linkType: soft
+
 "@smartpass/angular-node-takehome-server@workspace:packages/server":
   version: 0.0.0-use.local
   resolution: "@smartpass/angular-node-takehome-server@workspace:packages/server"
   dependencies:
+    "@smartpass/angular-node-takehome-common": "workspace:^"
     "@types/express": "npm:^4.17.21"
     "@types/node": "npm:^20.11.16"
     express: "npm:^4.18.2"

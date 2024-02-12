@@ -1,8 +1,9 @@
-import { AsyncPipe, JsonPipe } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, FormsModule, NgForm } from '@angular/forms';
-import { Observable, catchError, concatMap, delay, identity, map, take, timer } from 'rxjs';
-import { WebSocketSubject, webSocket } from 'rxjs/webSocket'
+import { AsyncPipe, JsonPipe } from '@angular/common'
+import { Component, ViewChild } from '@angular/core'
+import { FormsModule, NgForm } from '@angular/forms'
+import { ClientMessage } from '@smartpass/angular-node-takehome-common'
+import { catchError, concatMap, timer } from 'rxjs'
+import { webSocket } from 'rxjs/webSocket'
 
 @Component({
   selector: 'app-websocket-receiver',
@@ -21,7 +22,7 @@ export class WebsocketReceiverComponent {
   formModel = {message: 'foo'}
 
   constructor() {
-    this.websocket$ = webSocket('ws://localhost:3000')
+    this.websocket$ = webSocket<ClientMessage>('ws://localhost:3000')
 
     this.messages$ = this.websocket$
       .pipe(
@@ -36,10 +37,7 @@ export class WebsocketReceiverComponent {
   }
 
   ngOnInit() {
-    console.log('form', this.ngForm)
-
     this.ngForm?.form.valueChanges.subscribe((args) => {
-      console.log('value changes', args)
       this.websocket$.next({op: 'echo', data: args.message})
     })
   }

@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from 'express'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { Server } from 'ws'
+import { ClientMessage, ServerMessage } from '@smartpass/angular-node-takehome-common'
 
 const logger = pino({
   level: 'debug',
@@ -32,9 +33,9 @@ websocket.on('connection', (ws, req) => {
   ws.send(JSON.stringify({op: 'start', data: 'welocome!'}))
 
   ws.on('message', (data) => {
-    const {op, data: d} = JSON.parse(data.toString())
+    const {op, data: d} = JSON.parse(data.toString()) as ClientMessage
     logger.debug('Received op %s, data %o', op, d)
-    ws.send(JSON.stringify({op: 'echo', data: d}))
+    ws.send(JSON.stringify({op: 'echo', data: d} as ServerMessage))
   })
 
   let isAlive = true
