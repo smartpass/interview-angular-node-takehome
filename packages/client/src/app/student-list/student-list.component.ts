@@ -1,6 +1,6 @@
-import { AsyncPipe, JsonPipe, NgForOf } from '@angular/common';
+import { AsyncPipe, NgForOf } from '@angular/common';
 import { Component } from '@angular/core';
-import { catchError, map, of, switchMap, tap, timer } from 'rxjs';
+import { catchError, of, switchMap, timer } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
 @Component({

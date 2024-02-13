@@ -1,4 +1,4 @@
-import { Messages } from '@smartpass/angular-node-takehome-common'
+import { Messages, Students } from '@smartpass/angular-node-takehome-common'
 import cors from 'cors'
 import express, { Express, Request, Response, json } from 'express'
 import * as sqlite from 'sqlite3'
@@ -27,8 +27,27 @@ const db = (async () => {
   logger.debug('Running migrations')
   await db.migrate()
 
-  const students = await db.all('select * from students')
-  logger.debug(`students ${inspect(students)}`)
+  const newStudents: Students.Model.Create[] = []
+  for (let i = 0; i < 100; i++) {
+    const name = `student ${i}`
+    newStudents.push({
+      name,
+      profilePictureUrl: `https://gravatar.com/avatar/${encodeURIComponent(name)}?s=400&d=robohash&r=x`,
+      grade: '1'
+    })
+  }
+
+  const statement = await db.prepare('insert into students (name) values (?) returning *')
+
+  const students = (await Promise.all(
+      newStudents.map(({name}) => statement.all<Students.Model.Retrieve>(name))
+      )
+  ).flatMap(a => a)
+
+  await statement.finalize()
+
+  // const students = await db.all('select * from students')
+  logger.debug(`students ${inspect(students[students.length - 1])}`)
 
   return db
 })()
