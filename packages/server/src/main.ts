@@ -1,4 +1,4 @@
-import { ClientMessage, ServerMessage } from '@smartpass/angular-node-takehome-common'
+import { Messages } from '@smartpass/angular-node-takehome-common'
 import cors from 'cors'
 import express, { Express, Request, Response, json } from 'express'
 import * as sqlite from 'sqlite3'
@@ -75,9 +75,9 @@ websocket.on('connection', (ws, req) => {
   ws.send(JSON.stringify({op: 'start', data: 'welocome!'}))
 
   ws.on('message', (data) => {
-    const {op, data: d} = JSON.parse(data.toString()) as ClientMessage
+    const {op, data: d} = JSON.parse(data.toString()) as Messages.ClientMessage
     logger.debug('Received op %s, data %o', op, d)
-    ws.send(JSON.stringify({op: 'echo', data: d} as ServerMessage))
+    ws.send(JSON.stringify({op: 'echo', data: d} as Messages.ServerMessage))
   })
 
   let isAlive = true

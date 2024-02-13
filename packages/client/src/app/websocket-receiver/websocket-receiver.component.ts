@@ -1,7 +1,7 @@
 import { AsyncPipe, JsonPipe } from '@angular/common'
 import { Component, ViewChild } from '@angular/core'
 import { FormsModule, NgForm } from '@angular/forms'
-import { ClientMessage } from '@smartpass/angular-node-takehome-common'
+import { Messages } from '@smartpass/angular-node-takehome-common'
 import { catchError, concatMap, timer } from 'rxjs'
 import { webSocket } from 'rxjs/webSocket'
 
@@ -22,7 +22,7 @@ export class WebsocketReceiverComponent {
   formModel = {message: 'foo'}
 
   constructor() {
-    this.websocket$ = webSocket<ClientMessage>('ws://localhost:3000')
+    this.websocket$ = webSocket<Messages.ClientMessage>('ws://localhost:3000')
 
     this.messages$ = this.websocket$
       .pipe(
