@@ -86,6 +86,17 @@ app.route('/students')
     }
   })
 
+app.route('/locations')
+  .get(async (_req: Request, res: Response, next) => {
+    try {
+      const connection = await db
+      const result = await connection.all('select * from locations')
+      res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
 websocket.on('connection', (ws, req) => {
   logger.debug('Connected to client at %o', req.socket.address())
 
