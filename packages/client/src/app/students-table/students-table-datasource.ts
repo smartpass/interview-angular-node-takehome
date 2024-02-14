@@ -62,7 +62,7 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
             direction: this.sort.direction})))
       .pipe(
         map(([students, _page, _sort]) => {
-          return this.getPagedData(this.getSortedData(students));
+          return this.getPagedData(this.getSortedData([...students]));
         }));
     } else {
       throw Error('Please set the paginator and sort on the data source before connecting.');
