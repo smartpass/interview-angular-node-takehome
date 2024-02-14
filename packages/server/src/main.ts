@@ -1,4 +1,4 @@
-import { Messages, Students } from '@smartpass/angular-node-takehome-common'
+import { Messages, Passes, Students } from '@smartpass/angular-node-takehome-common'
 import cors from 'cors'
 import express, { Express, Request, Response, json } from 'express'
 import * as sqlite from 'sqlite3'
@@ -7,6 +7,7 @@ import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { Server } from 'ws'
 import { inspect } from 'util'
+import { camelCase, mapKeys } from 'lodash'
 
 const logger = pino({
   level: 'debug',
@@ -92,6 +93,17 @@ app.route('/locations')
       const connection = await db
       const result = await connection.all('select * from locations')
       res.json(result)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+app.route('/passes')
+  .get(async (_req: Request, res: Response, next) => {
+    try {
+      const connection = await db
+      const result = await connection.all<Passes.Model.Retrieve[]>('select * from passes')
+      res.json(result.map((pass) => mapKeys(pass, (_, key) => camelCase(key))))
     } catch (error) {
       next(error)
     }

@@ -3235,12 +3235,14 @@ __metadata:
     "@angular/router": "npm:^17.1.0"
     "@smartpass/angular-node-takehome-common": "workspace:^"
     "@types/jasmine": "npm:~5.1.0"
+    "@types/luxon": "npm:^3.4.2"
     jasmine-core: "npm:~5.1.0"
     karma: "npm:~6.4.0"
     karma-chrome-launcher: "npm:~3.2.0"
     karma-coverage: "npm:~2.2.0"
     karma-jasmine: "npm:~5.1.0"
     karma-jasmine-html-reporter: "npm:~2.1.0"
+    luxon: "npm:^3.4.4"
     rxjs: "npm:~7.8.0"
     tslib: "npm:^2.3.0"
     typescript: "npm:~5.3.2"
@@ -3252,6 +3254,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@smartpass/angular-node-takehome-common@workspace:packages/common"
   dependencies:
+    "@types/luxon": "npm:^3.4.2"
+    luxon: "npm:^3.4.4"
     typescript: "npm:^5.3.3"
   languageName: unknown
   linkType: soft
@@ -3262,9 +3266,11 @@ __metadata:
   dependencies:
     "@smartpass/angular-node-takehome-common": "workspace:^"
     "@types/express": "npm:^4.17.21"
+    "@types/lodash": "npm:^4.14.202"
     "@types/node": "npm:^20.11.16"
     cors: "npm:^2.8.5"
     express: "npm:^4.18.2"
+    lodash: "npm:^4.17.21"
     nodemon: "npm:^3.0.3"
     pino: "npm:^8.18.0"
     pino-http: "npm:^9.0.0"
@@ -3474,6 +3480,20 @@ __metadata:
   version: 7.0.15
   resolution: "@types/json-schema@npm:7.0.15"
   checksum: 10c0/a996a745e6c5d60292f36731dd41341339d4eeed8180bb09226e5c8d23759067692b1d88e5d91d72ee83dfc00d3aca8e7bd43ea120516c17922cbcb7c3e252db
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.14.202":
+  version: 4.14.202
+  resolution: "@types/lodash@npm:4.14.202"
+  checksum: 10c0/6064d43c8f454170841bd67c8266cc9069d9e570a72ca63f06bceb484cb4a3ee60c9c1f305c1b9e3a87826049fd41124b8ef265c4dd08b00f6766609c7fe9973
+  languageName: node
+  linkType: hard
+
+"@types/luxon@npm:^3.4.2":
+  version: 3.4.2
+  resolution: "@types/luxon@npm:3.4.2"
+  checksum: 10c0/d835467de3daf7e17ba78b50bb5a14efd94272439ca067990d71332a54b311544459c69623eddd243b511b28d70194c9591a9ee8cf9c038962c965f991affd7e
   languageName: node
   linkType: hard
 
@@ -7113,6 +7133,13 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10c0/cb53e582785c48187d7a188d3379c181b5ca2a9c78d2bce3e7dee36f32761d1c42983da3fe12b55cb74e1779fa94cdc2e5367c028a9b35317184ede0c07a30a9
+  languageName: node
+  linkType: hard
+
+"luxon@npm:^3.4.4":
+  version: 3.4.4
+  resolution: "luxon@npm:3.4.4"
+  checksum: 10c0/02e26a0b039c11fd5b75e1d734c8f0332c95510f6a514a9a0991023e43fb233884da02d7f966823ffb230632a733fc86d4a4b1e63c3fbe00058b8ee0f8c728af
   languageName: node
   linkType: hard
 
