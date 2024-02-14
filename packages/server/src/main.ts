@@ -1,13 +1,15 @@
-import { Messages, Passes, Students } from '@smartpass/angular-node-takehome-common'
+import { Messages, Students } from '@smartpass/angular-node-takehome-common'
 import cors from 'cors'
-import express, { Express, Request, Response, json } from 'express'
+import express, { Express, NextFunction, Request, Response, json } from 'express'
 import * as sqlite from 'sqlite3'
 import { open } from 'sqlite'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { Server } from 'ws'
 import { inspect } from 'util'
-import { camelCase, mapKeys } from 'lodash'
+import { ParsedQs } from 'qs'
+import { getLocations, getPasses, getStudents, insertStudent } from './db'
+import { toDb, toWire } from './utils'
 
 const logger = pino({
   level: 'debug',
@@ -63,51 +65,41 @@ app.use(
   cors(),
   json())
 
+const getterRoute = <T extends object, F extends (_: ParsedQs) => Promise<T[]>>(getData: F) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await getData(toDb([req.query])[0])
+      res.json(toWire(result))
+    } catch (error) {
+      next(error)
+    }
+  }
+
+const setterRoute = <T extends object, R extends object, F extends (_: T) => Promise<R[]> = (_: T) => Promise<R[]>>
+  (insertData: F) =>
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const result = await insertData({...req.body, id: undefined})
+        res.status(201).json(result)
+      } catch (error) {
+        next(error)
+      }
+    }
+
 app.get('/', (_req: Request, res: Response) => {
   res.send('Express + TypeScript Server')
 })
 
 app.route('/students')
-  .get(async (_req: Request, res: Response, next) => {
-    try {
-      const connection = await db
-      const result = await connection.all('select * from students')
-      res.json(result)
-    } catch (error) {
-      next(error)
-    }
-  })
-  .post(async (req: Request, res: Response, next) => {
-    try {
-      const connection = await db
-      const result = await connection.all('insert into students (name) values (?) returning *', [req.body.name])
-      res.status(201).json(result)
-    } catch (error) {
-      next(error)
-    }
-  })
+  .get(getterRoute(async (params) => getStudents(await db, params)))
+  .post(setterRoute<Students.Model.Create, Students.Model.Retrieve>(
+    async (s) => insertStudent(await db, s)))
 
 app.route('/locations')
-  .get(async (_req: Request, res: Response, next) => {
-    try {
-      const connection = await db
-      const result = await connection.all('select * from locations')
-      res.json(result)
-    } catch (error) {
-      next(error)
-    }
-  })
+  .get(getterRoute(async (params) => getLocations(await db, params)))
 
 app.route('/passes')
-  .get(async (_req: Request, res: Response, next) => {
-    try {
-      const connection = await db
-      const result = await connection.all<Passes.Model.Retrieve[]>('select * from passes')
-      res.json(result.map((pass) => mapKeys(pass, (_, key) => camelCase(key))))
-    } catch (error) {
-      next(error)
-    }
-  })
+  .get(getterRoute(async (params) => getPasses(await db, params)))
 
 websocket.on('connection', (ws, req) => {
   logger.debug('Connected to client at %o', req.socket.address())
