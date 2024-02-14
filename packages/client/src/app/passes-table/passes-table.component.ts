@@ -22,7 +22,7 @@ export class PassesTableComponent implements AfterViewInit {
   timeFormat = DateTime.DATETIME_FULL;
 
   /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
-  displayedColumns = ['id', 'sourceId', 'destinationId', 'startTime', 'endTime'];
+  displayedColumns = ['id', 'sourceId', 'destinationId', 'startTime', 'durationMinutes', 'endTime'];
 
   ngAfterViewInit(): void {
     this.dataSource.sort = this.sort;

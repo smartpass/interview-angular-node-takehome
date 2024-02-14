@@ -3,6 +3,7 @@ export namespace Model {
     sourceId: number
     destinationId: number
     startTime: string
+    duration: number
     endTime?: string
   }
 
