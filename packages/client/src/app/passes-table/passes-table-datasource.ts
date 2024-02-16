@@ -12,7 +12,7 @@ export interface PassesTableItem {
   sourceId: number
   destinationId: number
   startTime: DateTime
-  duration: number
+  durationMinutes: number
   endTime?: DateTime
 }
 

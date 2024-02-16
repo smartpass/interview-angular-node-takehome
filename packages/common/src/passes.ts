@@ -1,9 +1,10 @@
 export namespace Model {
   interface Common {
+    studentId: number
     sourceId: number
     destinationId: number
     startTime: string
-    duration: number
+    durationMinutes: number
     endTime?: string
   }
 
@@ -12,7 +13,7 @@ export namespace Model {
   }
 
   export interface Create extends Common {
-    endTime: undefined
+    endTime?: never
   }
 
   export interface Update extends Partial<Common> {
