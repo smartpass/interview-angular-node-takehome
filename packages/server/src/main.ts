@@ -1,12 +1,12 @@
 import { Messages, Students } from '@smartpass/angular-node-takehome-common'
 import cors from 'cors'
 import express, { Express, NextFunction, Request, Response, json } from 'express'
+import { partial } from 'lodash'
 import * as sqlite from 'sqlite3'
 import { open } from 'sqlite'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { Server } from 'ws'
-import { inspect } from 'util'
 import { ParsedQs } from 'qs'
 import { getLocations, getPasses, getStudents, insertStudent } from './db'
 import { toDb, toWire } from './utils'
@@ -40,17 +40,7 @@ const db = (async () => {
     })
   }
 
-  const statement = await db.prepare('insert into students (name) values (?) returning *')
-
-  const students = (await Promise.all(
-      newStudents.map(({name}) => statement.all<Students.Model.Retrieve>(name))
-      )
-  ).flatMap(a => a)
-
-  await statement.finalize()
-
-  // const students = await db.all('select * from students')
-  logger.debug(`students ${inspect(students[students.length - 1])}`)
+  await Promise.all(toDb(newStudents).map(partial(insertStudent, db)))
 
   return db
 })()
