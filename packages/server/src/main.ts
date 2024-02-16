@@ -10,6 +10,7 @@ import { Server } from 'ws'
 import { ParsedQs } from 'qs'
 import { GetParams, getLocations, getPasseWithMetadata, getPasses, getStudents, insertStudent } from './db'
 import { toDb, toWire } from './utils'
+import { createPass, endPass, setRandomInterval } from './activitiy_simulators'
 
 const logger = pino({
   level: 'debug',
@@ -41,6 +42,10 @@ const db = (async () => {
   }
 
   await Promise.all(toDb(newStudents).map(partial(insertStudent, db)))
+
+  setRandomInterval(partial(createPass, db), 4000, 10000)
+
+  setRandomInterval(partial(endPass, db), 4000, 10000)
 
   return db
 })()

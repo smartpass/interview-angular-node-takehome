@@ -6,27 +6,42 @@ import * as sqlite from "sqlite3";
 type Db = Database<sqlite.Database, sqlite.Statement>
 
 
+export type Where = {
+  column: string,
+  restriction: string
+}[]
+
 export interface GetParams {
   sort?: {
-    column: string,
-    direction: 'asc' | 'desc',
+    column: string
+    direction: 'asc' | 'desc'
   }
-  where?: {
-    column: string,
-    restriction: string
-  }[]
+  where?: Where
   limit?: number
+}
+
+export interface UpdateParams<T> {
+  changes: Partial<T>
+  where: Where
+}
+
+const buildWhereQueryFragment = (where?: Where) => {
+  let fragment = ''
+
+  if (where && where.length > 0) {
+    fragment += ' where '
+
+    fragment += where
+      .map(({column, restriction}) => ` ${column} ${restriction}`).join(' and ')
+  }
+
+  return fragment
 }
 
 const buildGetQuery = (selector: string, params: GetParams) => {
   let query = selector
 
-  if (params.where && params.where.length > 0) {
-    query += ' where '
-
-    query += params.where
-      .map(({column, restriction}) => ` ${column} ${restriction}`).join(' and ')
-  }
+  query += buildWhereQueryFragment(params.where)
 
   if (params.sort) {
     query += ` order by ${params.sort.column} ${params.sort.direction}`
@@ -39,22 +54,33 @@ const buildGetQuery = (selector: string, params: GetParams) => {
   return query
 }
 
+const buildUpsertFragment = <T extends object>(item: T) => {
+  const dbItem = mapKeys(item, (_, k) => `$${k}`)
+
+  return {
+    columnNames: `${Object.keys(item).join(',')}`,
+    variableNames: `${Object.keys(dbItem).join(',')}`,
+    dbItem,
+  }
+}
+
 const getResource = <T>(selector: string) => async (db: Db, params: GetParams = {}) => {
   return await db.all<T[]>(buildGetQuery(selector, params))
 }
 
 const insertResource = <T extends object, R extends object>(table: string) => async (db: Db, item: T) => {
-  let query = `insert into ${table}(`
+  const {columnNames, variableNames, dbItem} = buildUpsertFragment(item)
 
-  const dbItem = mapKeys(item, (_, k) => `$${k}`)
+  const query = `insert into ${table}(${columnNames}) values (${variableNames}) returning *`
 
-  query += `${Object.keys(item).join(',')}`
+  return db.all<R[]>(query, dbItem)
+}
 
-  query += ') values ('
+const updateResource = <T extends object, R extends object>(table: string) => async (db: Db, params: UpdateParams<T>) => {
+  const {columnNames, variableNames, dbItem} = buildUpsertFragment(params.changes)
+  const whereFragment = buildWhereQueryFragment(params.where)
 
-  query += `${Object.keys(dbItem).join(',')}`
-
-  query += ') returning *'
+  const query = `update ${table} set (${columnNames}) = (${variableNames}) ${whereFragment} returning *`
 
   return db.all<R[]>(query, dbItem)
 }
@@ -66,6 +92,7 @@ export const getLocations = getResource<Locations.Model.Retrieve>('select * from
 
 export const getPasses = getResource<Passes.Model.Retrieve>('select * from passes')
 export const insertPass = insertResource<Passes.Model.Create, Passes.Model.Retrieve>('passes')
+export const updatePass = updateResource<Passes.Model.Retrieve, Passes.Model.Retrieve>('passes')
 export const getPasseWithMetadata = async (db: Db, params: GetParams = {}) => {
   const selector =
   `select p.id as pass_id, p.start_time as pass_start_time, p.duration_minutes as pass_duration_minutes, p.end_time as pass_end_time,
