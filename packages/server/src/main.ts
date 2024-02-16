@@ -8,7 +8,7 @@ import pino from 'pino'
 import pinoHttp from 'pino-http'
 import { Server } from 'ws'
 import { ParsedQs } from 'qs'
-import { getLocations, getPasses, getStudents, insertStudent } from './db'
+import { GetParams, getLocations, getPasseWithMetadata, getPasses, getStudents, insertStudent } from './db'
 import { toDb, toWire } from './utils'
 
 const logger = pino({
@@ -90,6 +90,10 @@ app.route('/locations')
 
 app.route('/passes')
   .get(getterRoute(async (params) => getPasses(await db, params)))
+
+app.route('/active-passes')
+  .get(getterRoute(async (params) =>
+    getPasseWithMetadata(await db, {...params, where: [...(params['where'] as GetParams['where'] ?? []), {column: 'end_time', restriction: 'is null'}]})))
 
 websocket.on('connection', (ws, req) => {
   logger.debug('Connected to client at %o', req.socket.address())
