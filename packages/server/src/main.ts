@@ -22,6 +22,8 @@ const logger = pino({
   }
 });
 
+let timeoutGetters: (() => NodeJS.Timeout)[] = []
+
 const db = (async () => {
   const db = await open({
     filename: ':memory:',
@@ -43,9 +45,9 @@ const db = (async () => {
 
   await Promise.all(toDb(newStudents).map(partial(insertStudent, db)))
 
-  setRandomInterval(partial(createPass, db), 4000, 10000)
+  timeoutGetters.push(setRandomInterval(partial(createPass, db), 4000, 10000))
 
-  setRandomInterval(partial(endPass, db), 4000, 10000)
+  timeoutGetters.push(setRandomInterval(partial(endPass, db), 4000, 10000))
 
   return db
 })()
@@ -148,6 +150,10 @@ const cleanup = async () => {
     logger.debug(err, 'Server closed')
   })
   websocket.clients.forEach((ws) => ws.close(1001))
+
+  timeoutGetters.forEach((timeoutGetter) => {
+    clearInterval(timeoutGetter())
+  })
 
   try {
     await (await db).close()

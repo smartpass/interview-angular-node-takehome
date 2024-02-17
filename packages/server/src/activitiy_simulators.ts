@@ -16,10 +16,12 @@ const getRandom = (minValue: number, range: number) =>
  */
 export const setRandomInterval = (callback: () => void, minMs: number, rangeMs: number) => {
   const ms = getRandom(minMs, rangeMs)
-  setInterval(() => {
+  let timeout = setTimeout(() => {
     callback()
-    setRandomInterval(callback, minMs, rangeMs)
+    timeout = setRandomInterval(callback, minMs, rangeMs)()
   }, ms)
+
+  return () => timeout
 }
 
 /**
