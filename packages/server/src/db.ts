@@ -2,9 +2,9 @@ import { Locations, Passes, Students } from "@smartpass/angular-node-takehome-co
 import { mapKeys, pickBy } from "lodash";
 import { Database } from "sqlite";
 import * as sqlite from "sqlite3";
+import { EmitterSelector, Resource, ResourceEmitters } from "./event";
 
 type Db = Database<sqlite.Database, sqlite.Statement>
-
 
 export type Where = {
   column: string,
@@ -68,31 +68,64 @@ const getResource = <T>(selector: string) => async (db: Db, params: GetParams = 
   return await db.all<T[]>(buildGetQuery(selector, params))
 }
 
-const insertResource = <T extends object, R extends object>(table: string) => async (db: Db, item: T) => {
+type DbResource = {
+  students: {
+    create: Students.Model.Create,
+    retrieve: Students.Model.Retrieve,
+    update: Students.Model.Update,
+    singluar: 'student'
+  },
+  locations: {
+    create: Locations.Model.Create,
+    retrieve: Locations.Model.Retrieve,
+    update: Locations.Model.Update,
+    singluar: 'location'
+  },
+  passes: {
+    create: Passes.Model.Create,
+    retrieve: Passes.Model.Retrieve,
+    update: Passes.Model.Update,
+    singluar: 'pass'
+  },
+}
+
+const insertResource = <K extends keyof DbResource>
+  (table: K, emitterSelector: EmitterSelector<DbResource[K]['singluar']>) =>
+    async (db: Db, resourceEmitters: ResourceEmitters, item: DbResource[K]['create']) => {
   const {columnNames, variableNames, dbItem} = buildUpsertFragment(item)
 
   const query = `insert into ${table}(${columnNames}) values (${variableNames}) returning *`
 
-  return db.all<R[]>(query, dbItem)
+  const dbResult = (await db.all<DbResource[K]['retrieve'][]>(query, dbItem))[0]
+
+  emitterSelector(resourceEmitters).emitResourceCreated(dbResult as any)
+
+  return dbResult
 }
 
-const updateResource = <T extends object, R extends object>(table: string) => async (db: Db, params: UpdateParams<T>) => {
+const updateResource = <K extends keyof DbResource>
+  (table: K, emitterSelector: EmitterSelector<DbResource[K]['singluar']>) =>
+    async (db: Db, resourceEmitters: ResourceEmitters, params: UpdateParams<DbResource[K]['update']>) => {
   const {columnNames, variableNames, dbItem} = buildUpsertFragment(params.changes)
   const whereFragment = buildWhereQueryFragment(params.where)
 
   const query = `update ${table} set (${columnNames}) = (${variableNames}) ${whereFragment} returning *`
 
-  return db.all<R[]>(query, dbItem)
+  const dbResult = (await db.all<DbResource[K]['retrieve'][]>(query, dbItem))[0]
+
+  emitterSelector?.(resourceEmitters)?.emitResourceUpdated(dbResult as any)
+
+  return dbResult
 }
 
 export const getStudents = getResource<Students.Model.Retrieve>('select * from students')
-export const insertStudent = insertResource<Students.Model.Create, Students.Model.Retrieve>('students')
+export const insertStudent = insertResource('students', (emitters) => emitters.student)
 
 export const getLocations = getResource<Locations.Model.Retrieve>('select * from locations')
 
 export const getPasses = getResource<Passes.Model.Retrieve>('select * from passes')
-export const insertPass = insertResource<Passes.Model.Create, Passes.Model.Retrieve>('passes')
-export const updatePass = updateResource<Passes.Model.Retrieve, Passes.Model.Retrieve>('passes')
+export const insertPass = insertResource('passes', (emitters) => emitters.pass)
+export const updatePass = updateResource('passes', (emitters) => emitters.pass)
 export const getPasseWithMetadata = async (db: Db, params: GetParams = {}) => {
   const selector =
   `select p.id as pass_id, p.start_time as pass_start_time, p.duration_minutes as pass_duration_minutes, p.end_time as pass_end_time,

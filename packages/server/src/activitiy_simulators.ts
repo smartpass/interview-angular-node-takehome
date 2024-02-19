@@ -7,6 +7,7 @@ import { getLocations, getPasses, getStudents, insertPass, updatePass } from "./
 import { toDb } from "./utils"
 import { Database } from "sqlite"
 import * as sqlite3 from 'sqlite3'
+import { ResourceEmitters } from "./event"
 
 const getRandom = (minValue: number, range: number) =>
   minValue + Math.round(Math.random() * range)
@@ -27,7 +28,7 @@ export const setRandomInterval = (callback: () => void, minMs: number, rangeMs: 
 /**
  * Creates a random pass associated with a random student, source, and destination.
  */
-export const createPass = async (db: Database<sqlite3.Database, sqlite3.Statement>) => {
+export const createPass = async (db: Database<sqlite3.Database, sqlite3.Statement>, resourceEmitters: ResourceEmitters) => {
   const activePasses = await getPasses(db, {where: [{column: 'end_time', restriction: 'is null'}]})
 
   if (activePasses.length < 10) {
@@ -38,7 +39,7 @@ export const createPass = async (db: Database<sqlite3.Database, sqlite3.Statemen
     const sourceId = getRandom(0, locationCount)
     const destinationId = getRandom(0, locationCount)
 
-    await insertPass(db, toDb([{
+    await insertPass(db, resourceEmitters, toDb([{
       studentId,
       sourceId,
       destinationId,
@@ -51,12 +52,12 @@ export const createPass = async (db: Database<sqlite3.Database, sqlite3.Statemen
 /**
  * Ends a random active pass.
  */
-export const endPass = async (db: Database<sqlite3.Database, sqlite3.Statement>) => {
+export const endPass = async (db: Database<sqlite3.Database, sqlite3.Statement>, resourceEmitters: ResourceEmitters) => {
   const activePasses = await getPasses(db, {where: [{column: 'end_time', restriction: 'is null'}]})
   const pass = activePasses[getRandom(0, activePasses.length - 1)]
 
   if (activePasses.length > 2) {
-    await updatePass(db, {
+    await updatePass(db, resourceEmitters, {
       changes: toDb([{endTime: DateTime.now().toISO()}])[0],
       where: [{column: 'id', restriction: ` = ${pass.id}`}],
     })

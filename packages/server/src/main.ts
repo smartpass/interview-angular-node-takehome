@@ -1,4 +1,4 @@
-import { Messages, Students } from '@smartpass/angular-node-takehome-common'
+import { Messages, Passes, Students } from '@smartpass/angular-node-takehome-common'
 import cors from 'cors'
 import express, { Express, NextFunction, Request, Response, json } from 'express'
 import { partial } from 'lodash'
@@ -11,6 +11,7 @@ import { ParsedQs } from 'qs'
 import { GetParams, getLocations, getPasseWithMetadata, getPasses, getStudents, insertStudent } from './db'
 import { toDb, toWire } from './utils'
 import { createPass, endPass, setRandomInterval } from './activitiy_simulators'
+import { createResourceEmitters } from './event'
 
 const logger = pino({
   level: 'debug',
@@ -23,6 +24,8 @@ const logger = pino({
 });
 
 let timeoutGetters: (() => NodeJS.Timeout)[] = []
+
+const resourceEmitters = createResourceEmitters()
 
 const db = (async () => {
   const db = await open({
@@ -43,11 +46,11 @@ const db = (async () => {
     })
   }
 
-  await Promise.all(toDb(newStudents).map(partial(insertStudent, db)))
+  await Promise.all(toDb(newStudents).map(partial(insertStudent, db, resourceEmitters)))
 
-  timeoutGetters.push(setRandomInterval(partial(createPass, db), 4000, 10000))
+  timeoutGetters.push(setRandomInterval(partial(createPass, db, resourceEmitters), 4000, 10000))
 
-  timeoutGetters.push(setRandomInterval(partial(endPass, db), 4000, 10000))
+  timeoutGetters.push(setRandomInterval(partial(endPass, db, resourceEmitters), 4000, 10000))
 
   return db
 })()
@@ -72,7 +75,7 @@ const getterRoute = <T extends object, F extends (_: ParsedQs) => Promise<T[]>>(
     }
   }
 
-const setterRoute = <T extends object, R extends object, F extends (_: T) => Promise<R[]> = (_: T) => Promise<R[]>>
+const setterRoute = <T extends object, R extends object, F extends (_: T) => Promise<R> = (_: T) => Promise<R>>
   (insertData: F) =>
     async (req: Request, res: Response, next: NextFunction) => {
       try {
@@ -90,7 +93,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.route('/students')
   .get(getterRoute(async (params) => getStudents(await db, params)))
   .post(setterRoute<Students.Model.Create, Students.Model.Retrieve>(
-    async (s) => insertStudent(await db, s)))
+    async (s) => insertStudent(await db, resourceEmitters, s)))
 
 app.route('/locations')
   .get(getterRoute(async (params) => getLocations(await db, params)))
@@ -115,6 +118,16 @@ websocket.on('connection', (ws, req) => {
     ws.send(JSON.stringify({op: 'echo', data: d} as Messages.ServerMessage))
   })
 
+  const sendPassCreatedMessage = (pass: Passes.Model.Retrieve) => {
+    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_created', pass}}))
+  }
+  resourceEmitters.pass.on('pass_created', sendPassCreatedMessage)
+
+  const sendPassUpdatedMessage = (pass: Passes.Model.Retrieve) => {
+    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_updated', pass}}))
+  }
+  resourceEmitters.pass.on('pass_updated', sendPassUpdatedMessage)
+
   let isAlive = true
   ws.on('pong', () => {
     isAlive = true
@@ -131,6 +144,9 @@ websocket.on('connection', (ws, req) => {
   ws.on('close', (code, reason) => {
     logger.debug(`Closed connection with code ${code}, reason ${JSON.stringify(reason.toString())}`)
     clearInterval(heartbeatInterval)
+
+    resourceEmitters.pass.removeListener('pass_created', sendPassCreatedMessage)
+    resourceEmitters.pass.removeListener('pass_updated', sendPassUpdatedMessage)
   })
 })
 
@@ -154,6 +170,10 @@ const cleanup = async () => {
   timeoutGetters.forEach((timeoutGetter) => {
     clearInterval(timeoutGetter())
   })
+
+  for (const [_, emitter] of Object.entries(resourceEmitters)) {
+    emitter.removeAllListeners()
+  }
 
   try {
     await (await db).close()
