@@ -80,7 +80,7 @@ const setterRoute = <T extends object, R extends object, F extends (_: T) => Pro
     async (req: Request, res: Response, next: NextFunction) => {
       try {
         const result = await insertData({...req.body, id: undefined})
-        res.status(201).json(result)
+        res.status(201).json(toWire([result])[0])
       } catch (error) {
         next(error)
       }
@@ -119,12 +119,12 @@ websocket.on('connection', (ws, req) => {
   })
 
   const sendPassCreatedMessage = (pass: Passes.Model.Retrieve) => {
-    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_created', pass}}))
+    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_created', pass: toWire([pass])[0]}}))
   }
   resourceEmitters.pass.on('pass_created', sendPassCreatedMessage)
 
   const sendPassUpdatedMessage = (pass: Passes.Model.Retrieve) => {
-    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_updated', pass}}))
+    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_updated', pass: toWire([pass])[0]}}))
   }
   resourceEmitters.pass.on('pass_updated', sendPassUpdatedMessage)
 
