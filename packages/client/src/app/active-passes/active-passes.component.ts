@@ -1,11 +1,15 @@
 import { AsyncPipe, NgForOf } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { DateTime } from 'luxon';
-import { catchError, concat, distinct, endWith, map, of as observableOf, share, shareReplay, switchMap, takeWhile, tap, throwError, timer } from 'rxjs';
+import { catchError, distinct, endWith, filter, map, share, switchMap, takeWhile, throwError, timer } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
+import { LiveConnectionService } from '../live-connection.service';
+import { EventMessage } from '@smartpass/angular-node-takehome-common/src/messages';
+import { Passes } from '@smartpass/angular-node-takehome-common';
 
 @Component({
   selector: 'app-active-passes',
@@ -20,12 +24,33 @@ import { fromFetch } from 'rxjs/fetch';
   templateUrl: './active-passes.component.html',
   styleUrl: './active-passes.component.scss'
 })
-export class ActivePassesComponent {
+export class ActivePassesComponent implements OnDestroy {
   passes$
+
+  private passUpdatesSubscription
 
   passComparator = (_index: number, item: any) => item.id
 
-  constructor() {
+  constructor(
+    private liveConnectionService: LiveConnectionService,
+    private snackBar: MatSnackBar,
+  ) {
+    this.passUpdatesSubscription = this.liveConnectionService
+      .listenForMessages(
+        ({op, data}) => op === 'event' && data.event.startsWith('pass')
+      )
+      .pipe(
+        map((message) => (message as EventMessage).data['pass'] as Passes.Model.Retrieve | undefined),
+        filter(Boolean)
+      )
+      .subscribe((pass) => {
+        if (pass.endTime) {
+          this.snackBar.open(`pass ${pass.id}  ended`, undefined, {duration: 5000})
+        } else {
+          this.snackBar.open(`pass ${pass.id} started`, undefined, {duration: 5000})
+        }
+      })
+
     this.passes$ = timer(0, 5000)
     .pipe(
       switchMap(() => fromFetch('http://localhost:3000/active-passes')),
@@ -59,6 +84,8 @@ export class ActivePassesComponent {
       catchError(error => {
         return throwError(() => ({error: true, message: error.message}))
       }))
-
   }
+    ngOnDestroy(): void {
+      this.passUpdatesSubscription.unsubscribe()
+    }
 }
