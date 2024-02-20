@@ -1,6 +1,7 @@
 import { AsyncPipe, JsonPipe } from '@angular/common'
-import { Component, ViewChild } from '@angular/core'
+import { Component, OnInit, ViewChild } from '@angular/core'
 import { FormsModule, NgForm } from '@angular/forms'
+
 import { LiveConnectionService } from '../live-connection.service'
 
 @Component({
@@ -8,14 +9,14 @@ import { LiveConnectionService } from '../live-connection.service'
   standalone: true,
   imports: [FormsModule, JsonPipe, AsyncPipe],
   templateUrl: './websocket-receiver.component.html',
-  styleUrl: './websocket-receiver.component.scss'
+  styleUrl: './websocket-receiver.component.scss',
 })
-export class WebsocketReceiverComponent {
+export class WebsocketReceiverComponent implements OnInit {
   messages$
 
-  @ViewChild(NgForm, {static: true}) ngForm?: NgForm
+  @ViewChild(NgForm, { static: true }) ngForm?: NgForm
 
-  formModel = {message: 'foo'}
+  formModel = { message: 'foo' }
 
   constructor(private liveConnectionService: LiveConnectionService) {
     this.messages$ = this.liveConnectionService.listenForMessages()
@@ -23,7 +24,7 @@ export class WebsocketReceiverComponent {
 
   ngOnInit() {
     this.ngForm?.form.valueChanges.subscribe((args) => {
-      this.liveConnectionService.sendMessage({op: 'echo', data: args.message})
+      this.liveConnectionService.sendMessage({ op: 'echo', data: args.message })
     })
   }
 }

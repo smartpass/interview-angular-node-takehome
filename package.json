@@ -8,10 +8,24 @@
   "scripts": {
     "start": "yarn workspaces foreach --all -pi run start",
     "build": "yarn workspaces foreach --all -pti run build",
+    "lint": "eslint .",
     "start:server": "yarn workspace @smartpass/angular-node-takehome-server run start",
     "start:client": "yarn workspace @smartpass/angular-node-takehome-client run start"
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "eslint": "^8.0.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-standard-with-typescript": "^43.0.1",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0 || ^16.0.0 ",
+    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-promise": "^6.0.0",
+    "prettier": "^3.2.5",
+    "typescript": "*"
+  }
 }

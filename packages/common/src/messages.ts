@@ -12,7 +12,7 @@ export interface EventMessage {
   op: 'event'
   data: {
     event: string
-    [_: string]: any
+    [_: string]: unknown
   }
 }
 

@@ -1,14 +1,15 @@
-import { DataSource } from '@angular/cdk/collections';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { map, share, startWith, switchMap } from 'rxjs/operators';
-import { Observable, timer, throwError, combineLatest } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
-import { Students } from '@smartpass/angular-node-takehome-common';
+import { DataSource } from '@angular/cdk/collections'
+import { MatPaginator } from '@angular/material/paginator'
+import { MatSort } from '@angular/material/sort'
+import { Observable, combineLatest, throwError, timer } from 'rxjs'
+import { fromFetch } from 'rxjs/fetch'
+import { map, share, startWith, switchMap } from 'rxjs/operators'
+
+import { Students } from '@smartpass/angular-node-takehome-common'
 
 export interface StudentsTableItem {
-  name: string;
-  id: number;
+  name: string
+  id: number
 }
 
 /**
@@ -17,29 +18,30 @@ export interface StudentsTableItem {
  * (including sorting, pagination, and filtering).
  */
 export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
-  paginator: MatPaginator | undefined;
-  sort: MatSort | undefined;
+  paginator: MatPaginator | undefined
+  sort: MatSort | undefined
 
-  private students$ = timer(0, 5000)
-  .pipe(
+  private students$ = timer(0, 5000).pipe(
     switchMap(() => fromFetch('http://localhost:3000/students')),
     switchMap((response) => {
       if (response.ok) {
-        return response.json() as Promise<Students.Model.Retrieve[]>
+        return response.json() as Promise<Students.Retrieve[]>
       } else {
-        return throwError(() => new Error(`Error: ${response.status} ${response.statusText}`))
+        return throwError(
+          () => new Error(`Error: ${response.status} ${response.statusText}`),
+        )
       }
     }),
-      // catchError(error => {
-      //   return observableOf({error: true, message: error.message})
-      // })
-    share()
-    )
+    // catchError(error => {
+    //   return observableOf({error: true, message: error.message})
+    // })
+    share(),
+  )
 
-  length$: Observable<number> = this.students$.pipe(map(s => s.length))
+  length$: Observable<number> = this.students$.pipe(map((s) => s.length))
 
   constructor() {
-    super();
+    super()
   }
 
   /**
@@ -54,18 +56,27 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
       return combineLatest(
         this.students$,
         this.paginator.page.pipe(
-          startWith({pageIndex: this.paginator.pageIndex,
-           pageSize: this.paginator.pageSize,
-           length: this.paginator.length})),
+          startWith({
+            pageIndex: this.paginator.pageIndex,
+            pageSize: this.paginator.pageSize,
+            length: this.paginator.length,
+          }),
+        ),
         this.sort.sortChange.pipe(
-          startWith({active: this.sort.active,
-            direction: this.sort.direction})))
-      .pipe(
+          startWith({
+            active: this.sort.active,
+            direction: this.sort.direction,
+          }),
+        ),
+      ).pipe(
         map(([students, _page, _sort]) => {
-          return this.getPagedData(this.getSortedData([...students]));
-        }));
+          return this.getPagedData(this.getSortedData([...students]))
+        }),
+      )
     } else {
-      throw Error('Please set the paginator and sort on the data source before connecting.');
+      throw Error(
+        'Please set the paginator and sort on the data source before connecting.',
+      )
     }
   }
 
@@ -81,10 +92,10 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
    */
   private getPagedData(data: StudentsTableItem[]): StudentsTableItem[] {
     if (this.paginator) {
-      const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
-      return data.splice(startIndex, this.paginator.pageSize);
+      const startIndex = this.paginator.pageIndex * this.paginator.pageSize
+      return data.splice(startIndex, this.paginator.pageSize)
     } else {
-      return data;
+      return data
     }
   }
 
@@ -94,21 +105,28 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
    */
   private getSortedData(data: StudentsTableItem[]): StudentsTableItem[] {
     if (!this.sort || !this.sort.active || this.sort.direction === '') {
-      return data;
+      return data
     }
 
     return data.sort((a, b) => {
-      const isAsc = this.sort?.direction === 'asc';
+      const isAsc = this.sort?.direction === 'asc'
       switch (this.sort?.active) {
-      case 'name': return compare(a.name, b.name, isAsc);
-      case 'id': return compare(+a.id, +b.id, isAsc);
-      default: return 0;
+        case 'name':
+          return compare(a.name, b.name, isAsc)
+        case 'id':
+          return compare(+a.id, +b.id, isAsc)
+        default:
+          return 0
       }
-    });
+    })
   }
 }
 
 /** Simple sort comparator for example ID/Name columns (for client-side sorting). */
-function compare(a: string | number, b: string | number, isAsc: boolean): number {
-  return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
+function compare(
+  a: string | number,
+  b: string | number,
+  isAsc: boolean,
+): number {
+  return (a < b ? -1 : 1) * (isAsc ? 1 : -1)
 }

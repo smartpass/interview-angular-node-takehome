@@ -1,5 +1,6 @@
-import { Locations, Passes, Students } from "@smartpass/angular-node-takehome-common"
-import EventEmitter from "events"
+import EventEmitter from 'events'
+
+import { type Locations, type Passes, type Students } from '@smartpass/angular-node-takehome-common'
 
 export type Resource = 'student' | 'location' | 'pass'
 
@@ -8,9 +9,9 @@ export type UpdatedEvent = `${Resource}_updated`
 export type DeletedEvent = `${Resource}_deleted`
 
 export class ResourceEventEmitter<T> extends EventEmitter {
-  private createdEvent: `${Resource}_created`
-  private updatedEvent: `${Resource}_updated`
-  private deletedEvent: `${Resource}_deleted`
+  private readonly createdEvent: `${Resource}_created`
+  private readonly updatedEvent: `${Resource}_updated`
+  private readonly deletedEvent: `${Resource}_deleted`
 
   constructor(resourceName: Resource) {
     super()
@@ -48,16 +49,16 @@ export class ResourceEventEmitter<T> extends EventEmitter {
   emitResourceUpdated(resource: T): boolean {
     return super.emit(this.updatedEvent, resource)
   }
-
 }
 
 export const createResourceEmitters = () => ({
-  student: new ResourceEventEmitter<Students.Model.Retrieve>('student'),
-  location: new ResourceEventEmitter<Locations.Model.Retrieve>('location'),
-  pass: new ResourceEventEmitter<Passes.Model.Retrieve>('pass'),
+  student: new ResourceEventEmitter<Students.Retrieve>('student'),
+  location: new ResourceEventEmitter<Locations.Retrieve>('location'),
+  pass: new ResourceEventEmitter<Passes.Retrieve>('pass'),
 })
 
 export type ResourceEmitters = ReturnType<typeof createResourceEmitters>
 
-export type EmitterSelector<K extends keyof ResourceEmitters> =
-  (_: ResourceEmitters) => ResourceEmitters[K]
+export type EmitterSelector<K extends keyof ResourceEmitters> = (
+  _: ResourceEmitters,
+) => ResourceEmitters[K]

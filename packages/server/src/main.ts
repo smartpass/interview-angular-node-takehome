@@ -1,17 +1,32 @@
-import { Messages, Passes, Students } from '@smartpass/angular-node-takehome-common'
 import cors from 'cors'
-import express, { Express, NextFunction, Request, Response, json } from 'express'
+import express, {
+  type Express,
+  type NextFunction,
+  type Request,
+  type Response,
+  json,
+} from 'express'
 import { partial } from 'lodash'
-import * as sqlite from 'sqlite3'
-import { open } from 'sqlite'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
+import { type ParsedQs } from 'qs'
+import { open } from 'sqlite'
+import * as sqlite from 'sqlite3'
 import { Server } from 'ws'
-import { ParsedQs } from 'qs'
-import { GetParams, getLocations, getPasseWithMetadata, getPasses, getStudents, insertStudent } from './db'
-import { toDb, toWire } from './utils'
+
+import { type Messages, type Passes, type Students } from '@smartpass/angular-node-takehome-common'
+
 import { createPass, endPass, setRandomInterval } from './activitiy_simulators'
+import {
+  type GetParams,
+  getLocations,
+  getPasseWithMetadata,
+  getPasses,
+  getStudents,
+  insertStudent,
+} from './db'
 import { createResourceEmitters } from './event'
+import { toDb, toWire } from './utils'
 
 const logger = pino({
   level: 'debug',
@@ -19,11 +34,11 @@ const logger = pino({
     target: 'pino-pretty',
     options: {
       colorize: true,
-    }
-  }
-});
+    },
+  },
+})
 
-let timeoutGetters: (() => NodeJS.Timeout)[] = []
+const timeoutGetters: Array<() => NodeJS.Timeout> = []
 
 const resourceEmitters = createResourceEmitters()
 
@@ -36,13 +51,13 @@ const db = (async () => {
   logger.debug('Running migrations')
   await db.migrate()
 
-  const newStudents: Students.Model.Create[] = []
+  const newStudents: Students.Create[] = []
   for (let i = 0; i < 100; i++) {
     const name = `student ${i}`
     newStudents.push({
       name,
       profilePictureUrl: `https://gravatar.com/avatar/${encodeURIComponent(name)}?s=400&d=robohash&r=x`,
-      grade: '1'
+      grade: '1',
     })
   }
 
@@ -60,12 +75,10 @@ const app: Express = express()
 const websocket = new Server({ noServer: true })
 const port = 3000
 
-app.use(
-  pinoHttp({ logger }),
-  cors(),
-  json())
+app.use(pinoHttp({ logger }), cors(), json())
 
-const getterRoute = <T extends object, F extends (_: ParsedQs) => Promise<T[]>>(getData: F) =>
+const getterRoute =
+  <T extends object, F extends (_: ParsedQs) => Promise<T[]>>(getData: F) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = await getData(toDb([req.query])[0])
@@ -75,56 +88,81 @@ const getterRoute = <T extends object, F extends (_: ParsedQs) => Promise<T[]>>(
     }
   }
 
-const setterRoute = <T extends object, R extends object, F extends (_: T) => Promise<R> = (_: T) => Promise<R>>
-  (insertData: F) =>
-    async (req: Request, res: Response, next: NextFunction) => {
-      try {
-        const result = await insertData({...req.body, id: undefined})
-        res.status(201).json(toWire([result])[0])
-      } catch (error) {
-        next(error)
-      }
+const setterRoute =
+  <T extends object, R extends object, F extends (_: T) => Promise<R> = (_: T) => Promise<R>>(
+    insertData: F,
+  ) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await insertData({ ...req.body, id: undefined })
+      res.status(201).json(toWire([result])[0])
+    } catch (error) {
+      next(error)
     }
+  }
 
 app.get('/', (_req: Request, res: Response) => {
   res.send('Express + TypeScript Server')
 })
 
-app.route('/students')
-  .get(getterRoute(async (params) => getStudents(await db, params)))
-  .post(setterRoute<Students.Model.Create, Students.Model.Retrieve>(
-    async (s) => insertStudent(await db, resourceEmitters, s)))
+app
+  .route('/students')
+  .get(getterRoute(async (params) => await getStudents(await db, params)))
+  .post(
+    setterRoute<Students.Create, Students.Retrieve>(
+      async (s) => await insertStudent(await db, resourceEmitters, s),
+    ),
+  )
 
-app.route('/locations')
-  .get(getterRoute(async (params) => getLocations(await db, params)))
+app.route('/locations').get(getterRoute(async (params) => await getLocations(await db, params)))
 
-app.route('/passes')
-  .get(getterRoute(async (params) => getPasses(await db, params)))
+app.route('/passes').get(getterRoute(async (params) => await getPasses(await db, params)))
 
-app.route('/active-passes')
-  .get(getterRoute(async (params) =>
-    getPasseWithMetadata(await db, {...params, where: [...(params['where'] as GetParams['where'] ?? []), {column: 'end_time', restriction: 'is null'}]})))
+app.route('/active-passes').get(
+  getterRoute(
+    async (params) =>
+      await getPasseWithMetadata(await db, {
+        ...params,
+        where: [
+          ...((params['where'] as GetParams['where']) ?? []),
+          { column: 'end_time', restriction: 'is null' },
+        ],
+      }),
+  ),
+)
 
 websocket.on('connection', (ws, req) => {
   logger.debug('Connected to client at %o', req.socket.address())
 
-  ws.on('error', e => logger.error(e, 'Connection error'))
-
-  ws.send(JSON.stringify({op: 'start', data: 'welocome!'}))
-
-  ws.on('message', (data) => {
-    const {op, data: d} = JSON.parse(data.toString()) as Messages.ClientMessage
-    logger.debug('Received op %s, data %o', op, d)
-    ws.send(JSON.stringify({op: 'echo', data: d} as Messages.ServerMessage))
+  ws.on('error', (e) => {
+    logger.error(e, 'Connection error')
   })
 
-  const sendPassCreatedMessage = (pass: Passes.Model.Retrieve) => {
-    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_created', pass: toWire([pass])[0]}}))
+  ws.send(JSON.stringify({ op: 'start', data: 'welocome!' }))
+
+  ws.on('message', (data) => {
+    const { op, data: d } = JSON.parse(data.toString()) as Messages.ClientMessage
+    logger.debug('Received op %s, data %o', op, d)
+    ws.send(JSON.stringify({ op: 'echo', data: d } as Messages.ServerMessage))
+  })
+
+  const sendPassCreatedMessage = (pass: Passes.Retrieve) => {
+    ws.send(
+      JSON.stringify({
+        op: 'event',
+        data: { event: 'pass_created', pass: toWire([pass])[0] },
+      }),
+    )
   }
   resourceEmitters.pass.on('pass_created', sendPassCreatedMessage)
 
-  const sendPassUpdatedMessage = (pass: Passes.Model.Retrieve) => {
-    ws.send(JSON.stringify({op: 'event', data: {event: 'pass_updated', pass: toWire([pass])[0]}}))
+  const sendPassUpdatedMessage = (pass: Passes.Retrieve) => {
+    ws.send(
+      JSON.stringify({
+        op: 'event',
+        data: { event: 'pass_updated', pass: toWire([pass])[0] },
+      }),
+    )
   }
   resourceEmitters.pass.on('pass_updated', sendPassUpdatedMessage)
 
@@ -165,7 +203,9 @@ const cleanup = async () => {
   server.close((err) => {
     logger.debug(err, 'Server closed')
   })
-  websocket.clients.forEach((ws) => ws.close(1001))
+  websocket.clients.forEach((ws) => {
+    ws.close(1001)
+  })
 
   timeoutGetters.forEach((timeoutGetter) => {
     clearInterval(timeoutGetter())

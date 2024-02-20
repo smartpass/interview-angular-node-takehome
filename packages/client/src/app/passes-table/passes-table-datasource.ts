@@ -1,11 +1,12 @@
-import { DataSource } from '@angular/cdk/collections';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-import { map, share, startWith, switchMap } from 'rxjs/operators';
-import { Observable, timer, throwError, combineLatest } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
-import { Passes } from '@smartpass/angular-node-takehome-common';
-import { DateTime } from 'luxon';
+import { DataSource } from '@angular/cdk/collections'
+import { MatPaginator } from '@angular/material/paginator'
+import { MatSort } from '@angular/material/sort'
+import { DateTime } from 'luxon'
+import { Observable, combineLatest, throwError, timer } from 'rxjs'
+import { fromFetch } from 'rxjs/fetch'
+import { map, share, startWith, switchMap } from 'rxjs/operators'
+
+import { Passes } from '@smartpass/angular-node-takehome-common'
 
 export interface PassesTableItem {
   id: number
@@ -22,37 +23,36 @@ export interface PassesTableItem {
  * (including sorting, pagination, and filtering).
  */
 export class PassesTableDataSource extends DataSource<PassesTableItem> {
-  paginator: MatPaginator | undefined;
-  sort: MatSort | undefined;
+  paginator: MatPaginator | undefined
+  sort: MatSort | undefined
 
-  private passes$ = timer(0, 5000)
-  .pipe(
+  private passes$ = timer(0, 5000).pipe(
     switchMap(() => fromFetch('http://localhost:3000/passes')),
     switchMap((response) => {
       if (response.ok) {
-        return response.json().then(
-          (passes: Passes.Model.Retrieve[]) => passes.map(
-            (pass) => ({
-              ...pass,
-              startTime: DateTime.fromISO(pass.startTime),
-              endTime: pass.endTime ? DateTime.fromISO(pass.endTime) : undefined,
-            })
-          )
+        return response.json().then((passes: Passes.Retrieve[]) =>
+          passes.map((pass) => ({
+            ...pass,
+            startTime: DateTime.fromISO(pass.startTime),
+            endTime: pass.endTime ? DateTime.fromISO(pass.endTime) : undefined,
+          })),
         )
       } else {
-        return throwError(() => new Error(`Error: ${response.status} ${response.statusText}`))
+        return throwError(
+          () => new Error(`Error: ${response.status} ${response.statusText}`),
+        )
       }
     }),
-      // catchError(error => {
-      //   return observableOf({error: true, message: error.message})
-      // })
-    share()
-    )
+    // catchError(error => {
+    //   return observableOf({error: true, message: error.message})
+    // })
+    share(),
+  )
 
-  length$: Observable<number> = this.passes$.pipe(map(ps => ps.length))
+  length$: Observable<number> = this.passes$.pipe(map((ps) => ps.length))
 
   constructor() {
-    super();
+    super()
   }
 
   /**
@@ -67,18 +67,27 @@ export class PassesTableDataSource extends DataSource<PassesTableItem> {
       return combineLatest([
         this.passes$,
         this.paginator.page.pipe(
-          startWith({pageIndex: 0,
-           pageSize: this.paginator.pageSize,
-           length: this.paginator.length})),
+          startWith({
+            pageIndex: 0,
+            pageSize: this.paginator.pageSize,
+            length: this.paginator.length,
+          }),
+        ),
         this.sort.sortChange.pipe(
-          startWith({active: this.sort.active,
-            direction: this.sort.direction}))])
-      .pipe(
+          startWith({
+            active: this.sort.active,
+            direction: this.sort.direction,
+          }),
+        ),
+      ]).pipe(
         map(([passes, _page, _sort]) => {
-          return this.getPagedData(this.getSortedData([...passes]));
-        }));
+          return this.getPagedData(this.getSortedData([...passes]))
+        }),
+      )
     } else {
-      throw Error('Please set the paginator and sort on the data source before connecting.');
+      throw Error(
+        'Please set the paginator and sort on the data source before connecting.',
+      )
     }
   }
 
@@ -94,10 +103,10 @@ export class PassesTableDataSource extends DataSource<PassesTableItem> {
    */
   private getPagedData(data: PassesTableItem[]): PassesTableItem[] {
     if (this.paginator) {
-      const startIndex = this.paginator.pageIndex * this.paginator.pageSize;
-      return data.splice(startIndex, this.paginator.pageSize);
+      const startIndex = this.paginator.pageIndex * this.paginator.pageSize
+      return data.splice(startIndex, this.paginator.pageSize)
     } else {
-      return data;
+      return data
     }
   }
 
@@ -107,24 +116,42 @@ export class PassesTableDataSource extends DataSource<PassesTableItem> {
    */
   private getSortedData(data: PassesTableItem[]): PassesTableItem[] {
     if (!this.sort || !this.sort.active || this.sort.direction === '') {
-      return data;
+      return data
     }
 
     return data.sort((a, b) => {
-      const isAsc = this.sort?.direction === 'asc';
+      const isAsc = this.sort?.direction === 'asc'
       switch (this.sort?.active) {
-        case 'id': return compare(+a.id, +b.id, isAsc);
-        case 'sourceId': return compare(+a.sourceId, +b.sourceId, isAsc);
-        case 'destinationId': return compare(+a.destinationId, +b.destinationId, isAsc);
-        case 'startTime': return compare(a.startTime.toUnixInteger(), b.startTime.toUnixInteger(), isAsc);
-        case 'endTime': return compare(a.endTime?.toUnixInteger() ?? 0, b.endTime?.toUnixInteger() ?? 0, isAsc);
-        default: return 0;
+        case 'id':
+          return compare(+a.id, +b.id, isAsc)
+        case 'sourceId':
+          return compare(+a.sourceId, +b.sourceId, isAsc)
+        case 'destinationId':
+          return compare(+a.destinationId, +b.destinationId, isAsc)
+        case 'startTime':
+          return compare(
+            a.startTime.toUnixInteger(),
+            b.startTime.toUnixInteger(),
+            isAsc,
+          )
+        case 'endTime':
+          return compare(
+            a.endTime?.toUnixInteger() ?? 0,
+            b.endTime?.toUnixInteger() ?? 0,
+            isAsc,
+          )
+        default:
+          return 0
       }
-    });
+    })
   }
 }
 
 /** Simple sort comparator for example ID/Name columns (for client-side sorting). */
-function compare(a: string | number, b: string | number, isAsc: boolean): number {
-  return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
+function compare(
+  a: string | number,
+  b: string | number,
+  isAsc: boolean,
+): number {
+  return (a < b ? -1 : 1) * (isAsc ? 1 : -1)
 }
