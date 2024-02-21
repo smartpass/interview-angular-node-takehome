@@ -1,11 +1,16 @@
 /**
  * This file contain helpers for simulating activity for the exercise. Please do not edit any functions here.
  */
+import { faker } from '@faker-js/faker'
+import { partial, range } from 'lodash'
 import { DateTime } from 'luxon'
 import { type Database } from 'sqlite'
 import type * as sqlite3 from 'sqlite3'
 
-import { getLocations, getPasses, getStudents, insertPass, updatePass } from './db'
+import { Students } from '@smartpass/angular-node-takehome-common'
+import { Grade } from '@smartpass/angular-node-takehome-common/src/students'
+
+import { getLocations, getPasses, getStudents, insertPass, insertStudent, updatePass } from './db'
 import { type ResourceEmitters } from './event'
 import { toDb } from './utils'
 
@@ -77,4 +82,38 @@ export const endPass = async (
       where: [{ column: 'id', restriction: ` = ${pass.id}` }],
     })
   }
+}
+
+/**
+ * Generates mock student entries.
+ */
+export const generateStudents = async (
+  db: Database<sqlite3.Database, sqlite3.Statement>,
+  resourceEmitters: ResourceEmitters,
+) => {
+  const newStudents: Students.Create[] = []
+  for (let i = 0; i < 100; i++) {
+    const name = faker.person.fullName()
+    newStudents.push({
+      name,
+      profilePictureUrl: `https://gravatar.com/avatar/${encodeURIComponent(name)}?s=400&d=robohash&r=x`,
+      grade: faker.number.int({ min: 1, max: 12 }).toString() as Grade,
+    })
+  }
+
+  await Promise.all(toDb(newStudents).map(partial(insertStudent, db, resourceEmitters)))
+}
+
+/**
+ * Generates mock pass entries.
+ */
+export const generatePasses = async (
+  db: Database<sqlite3.Database, sqlite3.Statement>,
+  resourceEmitters: ResourceEmitters,
+) => {
+  await Promise.all(
+    range(6).map(async () => {
+      await createPass(db, resourceEmitters)
+    }),
+  )
 }

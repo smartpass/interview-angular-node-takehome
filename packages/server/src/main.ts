@@ -16,7 +16,13 @@ import { Server } from 'ws'
 
 import { type Messages, type Passes, type Students } from '@smartpass/angular-node-takehome-common'
 
-import { createPass, endPass, setRandomInterval } from './activitiy_simulators'
+import {
+  createPass,
+  endPass,
+  generatePasses,
+  generateStudents,
+  setRandomInterval,
+} from './activitiy_simulators'
 import {
   type GetParams,
   getLocations,
@@ -51,17 +57,9 @@ const db = (async () => {
   logger.debug('Running migrations')
   await db.migrate()
 
-  const newStudents: Students.Create[] = []
-  for (let i = 0; i < 100; i++) {
-    const name = `student ${i}`
-    newStudents.push({
-      name,
-      profilePictureUrl: `https://gravatar.com/avatar/${encodeURIComponent(name)}?s=400&d=robohash&r=x`,
-      grade: '1',
-    })
-  }
+  await generateStudents(db, resourceEmitters)
 
-  await Promise.all(toDb(newStudents).map(partial(insertStudent, db, resourceEmitters)))
+  await generatePasses(db, resourceEmitters)
 
   timeoutGetters.push(setRandomInterval(partial(createPass, db, resourceEmitters), 4000, 10000))
 

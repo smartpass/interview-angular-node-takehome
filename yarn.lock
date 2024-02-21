@@ -2152,6 +2152,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@faker-js/faker@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@faker-js/faker@npm:8.4.1"
+  checksum: 10c0/4f2aecddcfdc2cc8b50b2d15d1e37302a7c7a5bbd184ae910a9d271bc11248533ca74dcdd4a9ccbe20410553e7af0f6a4d334c5b955635e09a32ddf4a64942d4
+  languageName: node
+  linkType: hard
+
 "@fastify/busboy@npm:^2.0.0":
   version: 2.1.0
   resolution: "@fastify/busboy@npm:2.1.0"
@@ -3609,6 +3616,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@smartpass/angular-node-takehome-server@workspace:packages/server"
   dependencies:
+    "@faker-js/faker": "npm:^8.4.1"
     "@smartpass/angular-node-takehome-common": "workspace:^"
     "@types/express": "npm:^4.17.21"
     "@types/lodash": "npm:^4.14.202"
