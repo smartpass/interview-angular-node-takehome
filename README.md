@@ -4,10 +4,11 @@ Thank you for taking the time to go through this exercise. This project is compo
 The purpose of this assessment is to get a feel of your coding style, judgement for refactoring (interface design/componentization), and ability to debug. Please read the full description, and expectation before diving in. If you run into any issues please reach out immediately after verifying you have the proper versions of the dependencies!
 
 Your task consists of a few requirements:
-- TODO: Fix a bug where \<something is wrong with the frontend\>
-- TODO: Fix a bug where \<something is wrong with the backend\>
-- TODO: Implement a feature for \<TBD\>
+- On the Active Passes page, we have a feature where a toast notification appears whenever a pass is started or ended. However, the list of active passes doesn't change immediately. Update the page so that the list of active passes has instant updates similar to the toast notification.
+
 We know that the project has strange decisions and trade-offs, please be sure to make any changes that you think improves the quality and maintainability of the code (or point out the changes that you'd make) as you go through the tasks.
+
+Feel free to make changes to the client or the server logic.
 
 ---
 
