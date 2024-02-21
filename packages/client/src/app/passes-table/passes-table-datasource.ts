@@ -81,7 +81,7 @@ export class PassesTableDataSource extends DataSource<PassesTableItem> {
         ),
       ]).pipe(
         map(([passes, _page, _sort]) => {
-          return this.getPagedData(this.getSortedData([...passes]))
+          return this.getPagedData(this.getSortedData(passes))
         }),
       )
     } else {
