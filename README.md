@@ -6,6 +6,7 @@ The purpose of this assessment is to get a feel of your coding style, judgement 
 Your task consists of a few requirements:
 - On the Active Passes page, we have a feature where a toast notification appears whenever a pass is started or ended. However, the list of active passes doesn't change immediately. Update the page so that the list of active passes has instant updates similar to the toast notification.
 - On the passes page, there's a problem where as a user paginates through the table or changes the sort order, the rows of the table flicker. Investigate and fix this bug.
+- On the students page, the table takes a long time to load. Update the page to load the results faster.
 
 We know that the project has strange decisions and trade-offs, please be sure to make any changes that you think improves the quality and maintainability of the code (or point out the changes that you'd make) as you go through the tasks.
 

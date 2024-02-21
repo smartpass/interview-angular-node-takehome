@@ -2,12 +2,11 @@
  * This file contain helpers for simulating activity for the exercise. Please do not edit any functions here.
  */
 import { faker } from '@faker-js/faker'
-import { partial, range } from 'lodash'
+import { range } from 'lodash'
 import { DateTime } from 'luxon'
 import { type Database } from 'sqlite'
 import type * as sqlite3 from 'sqlite3'
 
-import { Students } from '@smartpass/angular-node-takehome-common'
 import { Grade } from '@smartpass/angular-node-takehome-common/src/students'
 
 import { getLocations, getPasses, getStudents, insertPass, insertStudent, updatePass } from './db'
@@ -85,23 +84,35 @@ export const endPass = async (
 }
 
 /**
+ * Creates a random student.
+ */
+export const createStudent = async (
+  db: Database<sqlite3.Database, sqlite3.Statement>,
+  resourceEmitters: ResourceEmitters,
+) => {
+  const name = faker.person.fullName()
+  const student = toDb([
+    {
+      name,
+      profilePictureUrl: `https://gravatar.com/avatar/${encodeURIComponent(name)}?s=400&d=robohash&r=x`,
+      grade: faker.number.int({ min: 1, max: 12 }).toString() as Grade,
+    },
+  ])[0]
+  return await insertStudent(db, resourceEmitters, student)
+}
+
+/**
  * Generates mock student entries.
  */
 export const generateStudents = async (
   db: Database<sqlite3.Database, sqlite3.Statement>,
   resourceEmitters: ResourceEmitters,
 ) => {
-  const newStudents: Students.Create[] = []
-  for (let i = 0; i < 100; i++) {
-    const name = faker.person.fullName()
-    newStudents.push({
-      name,
-      profilePictureUrl: `https://gravatar.com/avatar/${encodeURIComponent(name)}?s=400&d=robohash&r=x`,
-      grade: faker.number.int({ min: 1, max: 12 }).toString() as Grade,
-    })
-  }
-
-  await Promise.all(toDb(newStudents).map(partial(insertStudent, db, resourceEmitters)))
+  await Promise.all(
+    range(200000).map(async () => {
+      await createStudent(db, resourceEmitters)
+    }),
+  )
 }
 
 /**

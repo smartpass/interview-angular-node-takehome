@@ -18,6 +18,7 @@ import { type Messages, type Passes, type Students } from '@smartpass/angular-no
 
 import {
   createPass,
+  createStudent,
   endPass,
   generatePasses,
   generateStudents,
@@ -64,6 +65,8 @@ const db = (async () => {
   timeoutGetters.push(setRandomInterval(partial(createPass, db, resourceEmitters), 4000, 10000))
 
   timeoutGetters.push(setRandomInterval(partial(endPass, db, resourceEmitters), 4000, 10000))
+
+  timeoutGetters.push(setRandomInterval(partial(createStudent, db, resourceEmitters), 4000, 5000))
 
   return db
 })()
