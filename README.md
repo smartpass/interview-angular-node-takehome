@@ -30,3 +30,13 @@ Once the dependencies are installed, run
 yarn start
 ```
 this will start the client and server in dev mode. We expect that the development environment has ports `3000`, and `4200` available to bind. In dev mode, both components support live reloading. Additionally, each component can be started individually using `yarn start:server` or `yarn start:client`.
+
+## Lint Rules
+The project uses eslint and prettier for enforcing a coding style. To check for linting errors, run
+```sh
+yarn lint
+```
+To automatically fix errors when possible, run
+```sh
+yarn lint --fix
+```
