@@ -39,10 +39,12 @@ this will start the client and server in dev mode. We expect that the developmen
 
 ## How to submit the assignment
 
-Please submit your assignment by adding commits to the main branch. Then run the following command to archive the repository as a zip and send the file to us:
+Please submit your assignment by adding commits to the main branch. Then run the following command to archive the repository as a zip and email the file to to the person you received the assignment from. The command will create a file called `submission.zip` in the root of the repository.:
 
 ```
+
 git archive --format=zip --output=submission.zip main
+
 ```
 
 ## Lint Rules
