@@ -37,6 +37,11 @@ yarn start
 
 this will start the client and server in dev mode. We expect that the development environment has ports `3000`, and `4200` available to bind. In dev mode, both components support live reloading. Additionally, each component can be started individually using `yarn start:server` or `yarn start:client`.
 
+## How to submit the assignment
+
+Please submit your assignment by adding commits to the main branch. Then zip
+your project and send it to the email address that you received the assignment from.
+
 ## Lint Rules
 
 The project uses eslint and prettier for enforcing a coding style. To check for linting errors, run
