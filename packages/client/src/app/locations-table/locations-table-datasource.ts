@@ -6,6 +6,7 @@ import { fromFetch } from 'rxjs/fetch'
 import { map, share, startWith, switchMap } from 'rxjs/operators'
 
 import { Locations } from '@smartpass/angular-node-takehome-common'
+import { formatUrl } from '@smartpass/angular-node-takehome-common/src/utils'
 
 export interface LocationsTableItem {
   id: number
@@ -23,7 +24,7 @@ export class LocationsTableDataSource extends DataSource<LocationsTableItem> {
   sort: MatSort | undefined
 
   private locations$ = timer(0, 5000).pipe(
-    switchMap(() => fromFetch('http://localhost:3000/locations')),
+    switchMap(() => fromFetch(formatUrl('http://localhost:3000/locations'))),
     switchMap((response) => {
       if (response.ok) {
         return response.json().then(Array.from) as Promise<Locations.Retrieve[]>

@@ -25,6 +25,7 @@ import {
   Students,
 } from '@smartpass/angular-node-takehome-common'
 import { EventMessage } from '@smartpass/angular-node-takehome-common/src/messages'
+import { formatUrl } from '@smartpass/angular-node-takehome-common/src/utils'
 
 import { LiveConnectionService } from '../live-connection.service'
 
@@ -87,7 +88,9 @@ export class ActivePassesComponent implements OnDestroy {
       })
 
     this.passes$ = timer(0, 5000).pipe(
-      switchMap(() => fromFetch('http://localhost:3000/active-passes')),
+      switchMap(() =>
+        fromFetch(formatUrl('http://localhost:3000/active-passes')),
+      ),
       switchMap((response) => {
         if (response.ok) {
           return response.json() as Promise<ActivePassesResponse[]>
