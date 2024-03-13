@@ -24,6 +24,8 @@ export class PassesTableComponent implements AfterViewInit {
   dataSource = new PassesTableDataSource()
 
   timeFormat = DateTime.DATETIME_FULL
+  passComparator = (_index: number, item: any | undefined) => item?.id;
+
 
   /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
   displayedColumns = [

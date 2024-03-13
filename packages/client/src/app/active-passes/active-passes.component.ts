@@ -1,19 +1,22 @@
-import { AsyncPipe, NgForOf } from '@angular/common'
-import { Component, OnDestroy } from '@angular/core'
+import { AsyncPipe, CommonModule, NgForOf } from '@angular/common'
+import { Component, OnDestroy, OnInit } from '@angular/core'
 import { MatCardModule } from '@angular/material/card'
 import { MatDividerModule } from '@angular/material/divider'
 import { MatProgressBarModule } from '@angular/material/progress-bar'
 import { MatSnackBar } from '@angular/material/snack-bar'
 import { DateTime } from 'luxon'
 import {
+  Observable,
   catchError,
   distinct,
   endWith,
   filter,
   map,
+  of,
   share,
   switchMap,
   takeWhile,
+  tap,
   throwError,
   timer,
 } from 'rxjs'
@@ -52,16 +55,17 @@ type ActivePassesResponse = Pick<
   styleUrl: './active-passes.component.scss',
 })
 export class ActivePassesComponent implements OnDestroy {
-  passes$
+  passes$;
 
-  private passUpdatesSubscription
+  private passUpdatesSubscription;
 
-  passComparator = (_index: number, item: ActivePassesResponse) => item.id
+  passComparator = (_index: number, item: ActivePassesResponse | undefined) => item?.id
 
   constructor(
     private liveConnectionService: LiveConnectionService,
     private snackBar: MatSnackBar,
   ) {
+    this.passes$ = this.getPasses();
     this.passUpdatesSubscription = this.liveConnectionService
       .listenForMessages(
         ({ op, data }) => op === 'event' && data.event.startsWith('pass'),
@@ -74,6 +78,7 @@ export class ActivePassesComponent implements OnDestroy {
               | undefined,
         ),
         filter(Boolean),
+        tap(() => this.passes$ = this.getPasses())
       )
       .subscribe((pass) => {
         if (pass.endTime) {
@@ -85,12 +90,16 @@ export class ActivePassesComponent implements OnDestroy {
             duration: 5000,
           })
         }
-      })
+      });
+  }
 
-    this.passes$ = timer(0, 5000).pipe(
-      switchMap(() =>
-        fromFetch(formatUrl('http://localhost:3000/active-passes')),
-      ),
+  ngOnDestroy(): void {
+    this.passUpdatesSubscription.unsubscribe()
+  }
+
+  // Ideally would not want to return any, but due to the async pipe being mapped to the object it created an interesting return object that I would look to refactor
+  getPasses(): any {
+    return fromFetch(formatUrl('http://localhost:3000/active-passes')).pipe(
       switchMap((response) => {
         if (response.ok) {
           return response.json() as Promise<ActivePassesResponse[]>
@@ -136,8 +145,5 @@ export class ActivePassesComponent implements OnDestroy {
         return throwError(() => ({ error: true, message: error.message }))
       }),
     )
-  }
-  ngOnDestroy(): void {
-    this.passUpdatesSubscription.unsubscribe()
   }
 }
