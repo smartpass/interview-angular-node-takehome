@@ -1,7 +1,7 @@
 import { DataSource } from '@angular/cdk/collections'
 import { MatPaginator } from '@angular/material/paginator'
 import { MatSort } from '@angular/material/sort'
-import { Observable, combineLatest, throwError, timer } from 'rxjs'
+import { Observable, combineLatest, of, throwError, timer } from 'rxjs'
 import { fromFetch } from 'rxjs/fetch'
 import { map, share, startWith, switchMap } from 'rxjs/operators'
 
@@ -21,8 +21,7 @@ export interface StudentsTableItem {
 export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
   paginator: MatPaginator | undefined
   sort: MatSort | undefined
-
-  private students$ = timer(0, 5000).pipe(
+  students$ = timer(0, 5000).pipe(
     switchMap(() => fromFetch(formatUrl('http://localhost:3000/students'))),
     switchMap((response) => {
       if (response.ok) {
@@ -42,7 +41,7 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
   length$: Observable<number> = this.students$.pipe(map((s) => s.length))
 
   constructor() {
-    super()
+    super();
   }
 
   /**

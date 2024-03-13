@@ -24,8 +24,8 @@ export interface PassesTableItem {
  * (including sorting, pagination, and filtering).
  */
 export class PassesTableDataSource extends DataSource<PassesTableItem> {
-  paginator: MatPaginator | undefined
-  sort: MatSort | undefined
+  paginator: MatPaginator | undefined;
+  sort: MatSort | undefined;
 
   private passes$ = timer(0, 5000).pipe(
     switchMap(() => fromFetch(formatUrl('http://localhost:3000/passes'))),
