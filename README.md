@@ -1,6 +1,7 @@
 # SmartPass Angular Node Take-home
 
-Thank you for taking the time to go through this exercise. This project is composed of two main components: a backend [Express](https://expressjs.com/) server, and an [Angular](https://angular.io/) single page client application. At SmartPass we use Angular with some React in our client, and [Go](https://go.dev/) for our backend.
+Thank you for taking the time to go through this exercise. This project is composed of two main components: a backend [Express](https://expressjs.com/) server, and an [Angular](https://angular.io/) single page client application.
+The Angular project uses reactive programming with RxJS heavily. There are some resources below that will be helpful to look at. At SmartPass we use Angular with some React in our client, and [Go](https://go.dev/) for our backend.
 
 The purpose of this assessment is to get a feel of your coding style, judgement for refactoring (interface design/componentization), and ability to debug. Please read the full description, and expectation before diving in. If you run into any issues please reach out immediately after verifying you have the proper versions of the dependencies!
 
@@ -12,6 +13,8 @@ Your task consists of a few requirements:
 - Make any changes that you think improves the quality and maintainability of the code (or point out the changes that you'd make) as you go through the tasks. We know that the project has strange decisions and trade-offs.
 
 Feel free to make changes to the client or the server logic.
+
+You may not have time to complete all the tasks, so please leave comments in the README or code explaining what you would do if you had more time.
 
 ---
 
@@ -37,11 +40,17 @@ yarn start
 
 this will start the client and server in dev mode. We expect that the development environment has ports `3000`, and `4200` available to bind. In dev mode, both components support live reloading. Additionally, each component can be started individually using `yarn start:server` or `yarn start:client`.
 
+## Helpful Resources for Angular/RxJS
+
+- [The introduction to Reactive Programming you've been missing](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754)
+- [RxJS Introduction](https://rxjs.dev/guide/overview)
+- [Understanding Angular](https://angular.io/guide/understanding-angular-overview)
+
 ## How to submit the assignment
 
 Please submit your assignment by adding commits to the `main` branch.
 Then run the following command to archive the repository
-and email the file to the person you received the assignment from. 
+and email the file to the person you received the assignment from.
 The command will create a file called `submission.bundle` in the root of the repository.
 Make sure your changes are committed!
 
