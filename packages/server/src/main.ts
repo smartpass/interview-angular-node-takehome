@@ -29,6 +29,7 @@ import {
   getLocations,
   getPasseWithMetadata,
   getPasses,
+  getStudentCount,
   getStudents,
   insertStudent,
 } from './db'
@@ -89,6 +90,25 @@ const getterRoute =
     }
   }
 
+const paginatedGetterRoute =
+  <T extends object, F extends (_: ParsedQs) => Promise<T[]>>(
+    getData: F,
+    getCount: () => Promise<number>,
+  ) =>
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await getData(toDb([req.query])[0])
+      // todo: probably should get the total count and the paginated data in the same db trip
+      const count = await getCount()
+      res.json({
+        objects: toWire(result),
+        count,
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+
 const setterRoute =
   <T extends object, R extends object, F extends (_: T) => Promise<R> = (_: T) => Promise<R>>(
     insertData: F,
@@ -108,7 +128,12 @@ app.get('/', (_req: Request, res: Response) => {
 
 app
   .route('/students')
-  .get(getterRoute(async (params) => await getStudents(await db, params)))
+  .get(
+    paginatedGetterRoute(
+      async (params) => await getStudents(await db, params),
+      async () => await getStudentCount(await db),
+    ),
+  )
   .post(
     setterRoute<Students.Create, Students.Retrieve>(
       async (s) => await insertStudent(await db, resourceEmitters, s),
