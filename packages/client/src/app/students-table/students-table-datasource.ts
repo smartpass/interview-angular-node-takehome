@@ -1,11 +1,11 @@
 import { DataSource } from '@angular/cdk/collections'
 import { MatPaginator } from '@angular/material/paginator'
 import { MatSort } from '@angular/material/sort'
-import { Observable, combineLatest, throwError, timer } from 'rxjs'
+import { Observable, Subject, combineLatest, throwError, timer } from 'rxjs'
 import { fromFetch } from 'rxjs/fetch'
-import { map, share, startWith, switchMap } from 'rxjs/operators'
+import { startWith, switchMap } from 'rxjs/operators'
 
-import { Students } from '@smartpass/angular-node-takehome-common'
+import { GetStudentsResponse } from '@smartpass/angular-node-takehome-common/src/students'
 import { formatUrl } from '@smartpass/angular-node-takehome-common/src/utils'
 
 export interface StudentsTableItem {
@@ -22,24 +22,7 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
   paginator: MatPaginator | undefined
   sort: MatSort | undefined
 
-  private students$ = timer(0, 5000).pipe(
-    switchMap(() => fromFetch(formatUrl('http://localhost:3000/students'))),
-    switchMap((response) => {
-      if (response.ok) {
-        return response.json() as Promise<Students.Retrieve[]>
-      } else {
-        return throwError(
-          () => new Error(`Error: ${response.status} ${response.statusText}`),
-        )
-      }
-    }),
-    // catchError(error => {
-    //   return observableOf({error: true, message: error.message})
-    // })
-    share(),
-  )
-
-  length$: Observable<number> = this.students$.pipe(map((s) => s.length))
+  length$: Subject<number> = new Subject() // updated when the api response returns
 
   constructor() {
     super()
@@ -54,8 +37,8 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
     if (this.paginator && this.sort) {
       // Combine everything that affects the rendered data into one update
       // stream for the data-table to consume.
-      return combineLatest(
-        this.students$,
+      return combineLatest([
+        timer(0, 5000),
         this.paginator.page.pipe(
           startWith({
             pageIndex: this.paginator.pageIndex,
@@ -69,9 +52,41 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
             direction: this.sort.direction,
           }),
         ),
-      ).pipe(
-        map(([students, _page, _sort]) => {
-          return this.getPagedData(this.getSortedData([...students]))
+      ]).pipe(
+        switchMap(() => {
+          if (this.paginator) {
+            const startIndex =
+              this.paginator.pageIndex * this.paginator.pageSize
+            // todo: probably should cache this data so we don't make duplicate network requests when navigating back to pages we've already been
+            return fromFetch(
+              formatUrl('http://localhost:3000/students', {
+                offset: startIndex,
+                limit: this.paginator.pageSize,
+                // added this at the last minute, hope it's not broken :)
+                sort: {
+                  column: this.sort?.active || 'id',
+                  direction: this.sort?.direction || 'asc',
+                },
+              }),
+            )
+          } else {
+            return throwError(() => new Error(`paginator is ${this.paginator}`))
+          }
+        }),
+        switchMap((response) => {
+          if (response.ok) {
+            return response.json().then((resJson) => {
+              const { count, objects } = resJson as GetStudentsResponse // todo: use validation like zod here before casting
+              // this feels like it goes against the rx patterns. There's probably a better way to update multiple values at once
+              this.length$.next(count)
+              return objects
+            })
+          } else {
+            return throwError(
+              () =>
+                new Error(`Error: ${response.status} ${response.statusText}`),
+            )
+          }
         }),
       )
     } else {
@@ -86,48 +101,4 @@ export class StudentsTableDataSource extends DataSource<StudentsTableItem> {
    * any open connections or free any held resources that were set up during connect.
    */
   disconnect(): void {}
-
-  /**
-   * Paginate the data (client-side). If you're using server-side pagination,
-   * this would be replaced by requesting the appropriate data from the server.
-   */
-  private getPagedData(data: StudentsTableItem[]): StudentsTableItem[] {
-    if (this.paginator) {
-      const startIndex = this.paginator.pageIndex * this.paginator.pageSize
-      return data.splice(startIndex, this.paginator.pageSize)
-    } else {
-      return data
-    }
-  }
-
-  /**
-   * Sort the data (client-side). If you're using server-side sorting,
-   * this would be replaced by requesting the appropriate data from the server.
-   */
-  private getSortedData(data: StudentsTableItem[]): StudentsTableItem[] {
-    if (!this.sort || !this.sort.active || this.sort.direction === '') {
-      return data
-    }
-
-    return data.sort((a, b) => {
-      const isAsc = this.sort?.direction === 'asc'
-      switch (this.sort?.active) {
-        case 'name':
-          return compare(a.name, b.name, isAsc)
-        case 'id':
-          return compare(+a.id, +b.id, isAsc)
-        default:
-          return 0
-      }
-    })
-  }
-}
-
-/** Simple sort comparator for example ID/Name columns (for client-side sorting). */
-function compare(
-  a: string | number,
-  b: string | number,
-  isAsc: boolean,
-): number {
-  return (a < b ? -1 : 1) * (isAsc ? 1 : -1)
 }

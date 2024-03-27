@@ -20,6 +20,7 @@ export interface GetParams {
   }
   where?: Where
   limit?: number
+  offset?: number
 }
 
 export interface UpdateParams<T> {
@@ -50,6 +51,10 @@ const buildGetQuery = (selector: string, params: GetParams) => {
 
   if (params.limit) {
     query += ` limit ${params.limit}`
+  }
+
+  if (params.offset) {
+    query += ` offset ${params.offset}`
   }
 
   return query
@@ -144,6 +149,11 @@ const updateResource =
   }
 
 export const getStudents = getResource<Students.Retrieve>('select * from students')
+export const getStudentCount = async (db: Db) => {
+  // todo: abstract this so it can work for different tables
+  const sqlResponse = await db.get('select count(*) as cnt from students')
+  return sqlResponse.cnt
+}
 export const insertStudent = insertResource('students', (emitters) => emitters.student)
 
 export const getLocations = getResource<Locations.Retrieve>('select * from locations')

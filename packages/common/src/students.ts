@@ -15,3 +15,8 @@ export interface Create extends Common {}
 export interface Update extends Partial<Common> {
   id: number
 }
+
+export interface GetStudentsResponse {
+  count: number
+  objects: Retrieve[]
+}

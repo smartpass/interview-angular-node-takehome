@@ -69,7 +69,7 @@ export class PassesTableDataSource extends DataSource<PassesTableItem> {
         this.passes$,
         this.paginator.page.pipe(
           startWith({
-            pageIndex: 0,
+            pageIndex: this.paginator.pageIndex,
             pageSize: this.paginator.pageSize,
             length: this.paginator.length,
           }),
@@ -82,7 +82,7 @@ export class PassesTableDataSource extends DataSource<PassesTableItem> {
         ),
       ]).pipe(
         map(([passes, _page, _sort]) => {
-          return this.getPagedData(this.getSortedData(passes))
+          return this.getPagedData(this.getSortedData([...passes]))
         }),
       )
     } else {
@@ -105,6 +105,15 @@ export class PassesTableDataSource extends DataSource<PassesTableItem> {
   private getPagedData(data: PassesTableItem[]): PassesTableItem[] {
     if (this.paginator) {
       const startIndex = this.paginator.pageIndex * this.paginator.pageSize
+      // fix for bug #2
+      // the first fix I found was to change "splice" to "slice".
+      //  splice will modify the data in place,
+      //  which removes the items that we intend to show from the data
+      //  it fixes itself after a few seconds because the 5 second timer
+      //  refetches all the data
+      //  return data.slice(startIndex, startIndex + this.paginator.pageSize)
+      // alternative fix is to copy the data above [...passes] like how it's done in students-table-datasource
+      //  went with this for consistency
       return data.splice(startIndex, this.paginator.pageSize)
     } else {
       return data

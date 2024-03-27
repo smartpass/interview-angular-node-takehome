@@ -11,6 +11,7 @@ import {
   endWith,
   filter,
   map,
+  merge,
   share,
   switchMap,
   takeWhile,
@@ -54,6 +55,7 @@ type ActivePassesResponse = Pick<
 export class ActivePassesComponent implements OnDestroy {
   passes$
 
+  private passEvents
   private passUpdatesSubscription
 
   passComparator = (_index: number, item: ActivePassesResponse) => item.id
@@ -62,7 +64,7 @@ export class ActivePassesComponent implements OnDestroy {
     private liveConnectionService: LiveConnectionService,
     private snackBar: MatSnackBar,
   ) {
-    this.passUpdatesSubscription = this.liveConnectionService
+    this.passEvents = this.liveConnectionService
       .listenForMessages(
         ({ op, data }) => op === 'event' && data.event.startsWith('pass'),
       )
@@ -75,19 +77,22 @@ export class ActivePassesComponent implements OnDestroy {
         ),
         filter(Boolean),
       )
-      .subscribe((pass) => {
-        if (pass.endTime) {
-          this.snackBar.open(`pass ${pass.id}  ended`, undefined, {
-            duration: 5000,
-          })
-        } else {
-          this.snackBar.open(`pass ${pass.id} started`, undefined, {
-            duration: 5000,
-          })
-        }
-      })
+    this.passUpdatesSubscription = this.passEvents.subscribe((pass) => {
+      if (pass.endTime) {
+        this.snackBar.open(`pass ${pass.id}  ended`, undefined, {
+          duration: 5000,
+        })
+      } else {
+        this.snackBar.open(`pass ${pass.id} started`, undefined, {
+          duration: 5000,
+        })
+      }
+    })
 
-    this.passes$ = timer(0, 5000).pipe(
+    // fix for bug #1 is to use merge to combine the observables
+    //  so that new pass data is fetched whenever a pass starts/ends
+    //  in addition to the 5 second interval
+    this.passes$ = merge(timer(0, 5000), this.passEvents).pipe(
       switchMap(() =>
         fromFetch(formatUrl('http://localhost:3000/active-passes')),
       ),
