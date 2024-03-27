@@ -1,7 +1,7 @@
 # SmartPass Angular Node Take-home
 
 Thank you for taking the time to go through this exercise. This project is composed of two main components: a backend [Express](https://expressjs.com/) server, and an [Angular](https://angular.io/) single page client application.
-The Angular project uses reactive programming with RxJS heavily. There are some resources below that will be helpful to look at. At SmartPass we use Angular with some React in our client, and [Go](https://go.dev/) for our backend.
+The Angular project uses reactive programming with [RxJS](https://rxjs.dev/) heavily. There are some resources below that will be helpful to look at. At SmartPass we use Angular with some React in our client, and [Go](https://go.dev/) for our backend.
 
 The purpose of this assessment is to get a feel of your coding style, judgement for refactoring (interface design/componentization), and ability to debug. Please read the full description, and expectation before diving in. If you run into any issues please reach out immediately after verifying you have the proper versions of the dependencies!
 
